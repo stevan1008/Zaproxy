@@ -1,0 +1,33 @@
+version: '3'
+services:
+  zap:
+    image: "owasp/zap2docker-stable"
+    command: zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true -config api.key=fookey
+    ports:
+      - "8090:8090"
+
+  juice-shop:
+    image: "bkimminich/juice-shop"
+    ports:
+      - "3000:3000"
+
+  mysql:
+    image: "mysql:8.0"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=mini-dast
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    ports:
+      - "33060:3306"
+    
+  scanner-service-api-go:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - zap
+      - juice-shop
+      - mysql
+    environment:
+      ZAP_API_URL: "http://zap:8090"
